@@ -7,6 +7,6 @@ class Home extends CI_Controller {
 	{
 		$data['title']='My ECommerce';
 		$data['mainContent']='admin/index';
-		$this->load->view('admin/template/master',$data);
+		$this->load->view('admin/template/master1',$data);
 	}
 }

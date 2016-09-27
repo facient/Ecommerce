@@ -108,7 +108,7 @@
                                     </td>
                                    
                                     <td><?php echo $purchase->user_id; ?></td>
-                                      <td>
+                                    <td>
                                     <a name="<?php echo $purchase->item_id; ?>" 
                                     id="<?php echo $purchase->transaction; ?>" 
                                     href="#<?php echo ($purchase->transaction=='purchase')?'secondDetails':($purchase->transaction=='sales')?'secondDetails':
