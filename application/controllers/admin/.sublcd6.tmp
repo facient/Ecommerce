@@ -1,0 +1,942 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Reports extends CI_Controller {
+
+	public function __construct()
+	{		
+		parent::__construct();
+
+	}
+
+	// List all your items
+	public function index()
+	{
+		$startDate=date('d/m/y');
+		//echo strtotime($startDate);
+
+		$this->db->where('date',date('Y-m-d'));
+		$this->db->group_by('mini_trans_id');		
+		$data['purchases']=$this->reports->get_all();	
+		$data['title']=' ECommerce | Reports';
+		$data['mainContent']='admin/reports/index';
+		$this->load->view('admin/template/master1',$data);
+	}
+
+		
+	public function activity_reports()
+	{
+		$startDate=date('d/m/y');
+		//echo strtotime($startDate);
+		$this->db->where('date',date('Y-m-d'));
+		$this->db->group_by('mini_trans_id');		
+		$data['purchases']=$this->reports->get_all();
+
+	
+		$data['title']=' ECommerce | Reports';
+		$data['mainContent']='admin/reports/index';
+		$this->load->view('admin/template/master1',$data);
+	}
+
+	public function activity_reports_view()
+	{
+		
+		if ($_SERVER['REQUEST_METHOD']=='GET') 
+	 	{
+		if (($this->input->get('inputStartDate'))&&($this->input->get('inputEndDate'))) 
+		{
+			$startDate=$this->input->get('inputStartDate');
+			$endDate=$this->input->get('inputEndDate');
+			$this->db->where('date >=', date('Y/m/d',strtotime($startDate)));
+			$this->db->where('date <=', date('Y/m/d',strtotime($endDate)));			
+			
+			if ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			}
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}		
+		  }
+		  elseif ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputTransType')) 
+		   {			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+				
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}				
+		  $this->db->group_by('mini_trans_id');
+		  $purchases=$this->reports->get_all();
+		 	if ($purchases!=false) {
+		 	
+		 	
+		 $count=0;
+		 foreach ($purchases as $key) {
+			$count++;		
+			
+		 	 	$responseString= '<tr>'.
+				 '<td>'.$count.'</td>	
+				 <td>'.$key->mini_trans_id.'</td>
+				 <td>'.date('d-m-Y',strtotime($key->date)).'</td>
+				 <td>'.$key->supplier_name.'</td>
+				 <td>'.$key->description.'</td>
+				 <td>'.'<a name="'.$key->mini_trans_id.'" href="purchase" data-toggle="modal" class="label label-primary purchasedet">View Details</a>'.'</td>
+				 <td><span class="label label-primary">'.$key->transaction.'</span></td>';
+					
+				if ($key->transaction=='purchase') {
+				$responseString.='<td>'.$key->purchase_grand_total.'</td>';
+				}elseif(($key->transaction=="sales")||($key->transaction=="quotation")){
+				$responseString.='<td>'.$key->sale_grand_total.'</td>';
+				}elseif(($key->transaction=="payment")||($key->transaction=="receipt")){
+					if ($key->payment_amount==null) {
+					 $responseString.='<td>'.'<span class="label label-danger">'.$key->cheque_return.'</span>'.'</td>';	
+					}
+					else{
+				  $responseString.='<td>'.$key->payment_amount.'</td>';
+				}
+				}
+                 if ($key->status=='Active'){
+                 $responseString.='<td>'.'<span class="label label-primary">Active</span></td>';
+                   }elseif ($key->status=='Initial'){
+                  $responseString.='<td>'.  '<span class="label label-default">'.$key->status.'</span></td>';
+                    } elseif ($key->status=='Revised'){
+                  $responseString.='<td>'.  '<span class="label label-info">'.$key->status.'</span></td>';
+                   }elseif ($key->status=='InProcess'){
+                  $responseString.='<td>'.  '<span class="label label-primary">'.$key->status.'</span></td>';
+                     }elseif ($key->status=='Approved'){
+                  $responseString.='<td>'.  '<span class="label label-success">'.$key->status.'</span></td>';
+                   }elseif ($key->status=='Rejected'){
+                  $responseString.='<td>'.  '<span class="label label-danger">'.$key->status.'</span></td> ';     
+                   }else{ 
+                  $responseString.='<td>'.  '<span class="label label-danger">Deacitve</span></td>';
+                  }
+                                    
+
+				$responseString.='</tr>';
+				 echo $responseString;
+				 }
+			 }else{
+			 	echo "No Record Found";
+			 }			
+		}
+		
+	}
+	
+		public function sale_purchase()
+		{
+			$startDate=date('d/m/y');
+			//echo strtotime($startDate);
+			$this->db->where('date',date('Y-m-d'));
+			$this->db->where("(transaction='purchase' OR transaction='sales')");			
+			$this->db->group_by('mini_trans_id');		
+			$data['purchases']=$this->reports->get_all();
+
+		
+			$data['title']=' ECommerce | Reports Sale | Purchase';
+			$data['mainContent']='admin/reports/sale_purchase';
+			$this->load->view('admin/template/master1',$data);
+		}
+	public function sale_purchase_view()
+	{
+		
+		if ($_SERVER['REQUEST_METHOD']=='GET') 
+	 	{
+		if (($this->input->get('inputStartDate'))&&($this->input->get('inputEndDate'))) 
+		{
+			// $startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+			$startDate = date('Y/m/d', strtotime($this->input->get('inputStartDate')));
+			$endDate = date('Y/m/d', strtotime($this->input->get('inputEndDate')));
+			// $endDate=date('Y-m-d',strtotime($this->input->get('inputEndDate')));
+			// var_dump($endDate);
+			// var_dump($this->input->get('inputEndDate'));
+
+			// $this->db->where('date >= ', $startDate);
+			// $this->db->where('daate <=', $endDate);	
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');		
+					
+			
+			if ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			}
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}		
+		  }
+		  elseif ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputTransType')) 
+		   {			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+				
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}				
+		  $this->db->group_by('mini_trans_id');
+		  $purchases=$this->reports->get_all();
+		 if ($purchases!=false){
+		 $count=0;
+		 foreach ($purchases as $key) {
+			$count++;		
+			
+		 	 	$responseString= '<tr>'.
+				 '<td>'.$count.'</td>	
+				 <td>'.$key->mini_trans_id.'</td>
+				 <td>'.date('d-m-Y',strtotime($key->date)).'</td>
+				 <td>'.$key->supplier_name.'</td>
+				 <td>'.$key->description.'</td>
+				 <td>'.'<a name="'.$key->mini_trans_id.'" href="purchase" data-toggle="modal" class="label label-primary purchasedet">View Details</a>'.'</td>
+				 <td><span class="label label-primary">'.$key->transaction.'</span></td>';
+					
+				if ($key->transaction=='purchase') {
+				$responseString.='<td>'.$key->purchase_grand_total.'</td>';
+				}elseif(($key->transaction=="sales")){
+				$responseString.='<td>'.$key->sale_grand_total.'</td>';
+				}
+                if ($key->status=='Active'){
+                 $responseString.='<td>'.'<span class="label label-primary">Active</span></td>';
+                   }else{ 
+                  $responseString.='<td>'.  '<span class="label label-danger">Deacitve</span></td>';
+                  }                                  
+
+				$responseString.='</tr>';
+				 echo $responseString;
+				 
+				 }
+			}else{
+				echo "No Record Found";
+			}			
+		}
+		
+	}
+
+	public function payment_receipt()
+		{
+			
+			//echo strtotime($startDate);
+			$this->db->where('date',date('Y-m-d'));
+			$this->db->where("(transaction='payment' OR transaction='receipt')");			
+			$this->db->group_by('mini_trans_id');		
+			$data['purchases']=$this->reports->get_all();		
+			$data['title']=' ECommerce | Reports Payment | Receipt';
+			$data['mainContent']='admin/reports/payment_receipt';
+			$this->load->view('admin/template/master1',$data);
+		}
+	public function payment_receipt_view()
+	{	
+		
+		if ($_SERVER['REQUEST_METHOD']=='GET') 
+	 		{
+		if (($this->input->get('inputStartDate'))&&($this->input->get('inputEndDate'))) 
+			{
+			$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+
+			$endDate=date('Y-m-d',strtotime($this->input->get('inputEndDate')));
+			
+
+			
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');		
+			
+			if ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			}
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}		
+		  }
+		  elseif ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputTransType')) 
+		   {			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+				
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}			
+		  
+		  $purchases=$this->reports->get_all();
+		 	
+		 	$count=0;
+		 	if ($purchases!=false){
+		 	
+			 foreach ($purchases as $key) {
+			$count++;		
+			
+ 	 		$responseString= '<tr>
+				 <td>'.$count.'</td>	
+				 <td>'.$key->mini_trans_id.'</td>
+				 <td>'.date('d-m-Y',strtotime($key->date)).'</td>
+				 <td>'.$key->supplier_name.'</td>
+				 <td>'.$key->description.'</td>
+				 <td>'.'<a name="'.$key->mini_trans_id.'" href="purchase" data-toggle="modal" class="label label-primary purchasedet">View Details</a>'.'</td>
+				 <td><span class="label label-primary">'.$key->transaction.'</span></td>';
+
+				  if($key->payment_amount==null){
+			   		$responseString.='<td>'.'<span class="label label-danger">'.$key->cheque_return.'</span>'.'</td>';	
+					}
+					else{
+				  $responseString.='<td>'.$key->payment_amount.'</td>';
+					}
+				if ($key->status=='Active'){
+                 $responseString.='<td><span class="label label-primary">Active</span></td>';
+                   }else{ 
+                  $responseString.='<td><span class="label label-danger">Deacitve</span></td>';
+                  }                                  
+
+				$responseString.='</tr>';
+				 echo $responseString;
+				 }
+			 }else{
+			 	echo "No Record Found";
+			 }			
+		}
+		
+	}
+
+	public function cash_book()
+		{
+			$this->db->where('date <',date('Y-m-d'));
+			$this->db->where('payment_mode','cash');		
+			$openingBal=$this->reports->get_all();
+			$openingBalVari=0;
+			foreach ($openingBal as $key) {
+				
+
+				 if($key->transaction=='receipt'){
+				 	$openingBalVari=$openingBalVari+$key->payment_amount;
+				 }
+				elseif($key->transaction=='payment'){
+				 	$openingBalVari=$openingBalVari-$key->payment_amount;
+				 }
+			}
+				
+			$data['openingBal']=$openingBalVari;
+			
+
+			$this->db->where('date',date('Y-m-d'));
+			$this->db->where('payment_mode','cash');							
+			$data['purchases']=$this->reports->get_all();
+			// print_r($data['purchases']);
+			// die();		
+			$data['title']=' ECommerce | Reports Cash Book';
+			$data['mainContent']='admin/reports/cash_book';
+			$this->load->view('admin/template/master1',$data);
+		}
+	public function cash_book_view()
+	{	
+		$json=array();
+		if ($_SERVER['REQUEST_METHOD']=='GET') 
+	 		{
+			$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+	 			
+			if (($this->input->get('inputStartDate'))&&($this->input->get('inputEndDate'))) 
+			{
+			$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+
+			$endDate=date('Y-m-d',strtotime($this->input->get('inputEndDate')));
+			
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');		
+			
+			if ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			}
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}		
+		  }
+		  elseif ($this->input->get('inputTransId')) 
+			{				
+				$transId=$this->input->get('inputTransId');
+				$this->db->where('mini_trans_id',$transId);
+			
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputTransType')) 
+		   {			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+				
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}				
+		  $this->db->where('payment_mode','cash');
+		  $purchases=$this->reports->get_all();
+		  
+		  $this->db->where('date <', $startDate);
+		  $this->db->where('payment_mode','cash');		  
+		  $openingBal=$this->reports->get_all();
+		   $openingBalVari=0;
+		   if ($openingBal!=false) {
+		   	
+	   		foreach ($openingBal as $key) {
+			 if(($key->transaction=='receipt')){
+			 	if ($key->payment_mode=='cash') {			 		
+			 	$openingBalVari=$openingBalVari+$key->payment_amount;
+			 	// echo $key->payment_amount.'<br>';
+
+			 	}
+			 }
+			elseif($key->transaction=='payment'){
+				if ($key->payment_mode=='cash') {
+			 	$openingBalVari=$openingBalVari-$key->payment_amount;
+				 }
+			 }
+			}
+				 $json['openingBalVari']= 'OPENING BALANCE: '.$openingBalVari;
+
+		   }else{
+		   	 $json['openingBalVari']= 'OPENING BALANCE: '. 0;
+		   }
+		   	if($purchases!=false){
+		 	$count=0;		 	
+		 	$calPreBal=$openingBalVari;
+		 	$responseString='';
+			 foreach ($purchases as $key) {
+			$count++;		
+			
+			/* ser.no  id date transaction description debit credit balance user details
+			*/
+ 	 		$responseString.= '<tr>
+				 <td>'.$count.'</td>	
+				 <td>'.$key->mini_trans_id.'</td>
+				 <td>'.date('d-m-Y', strtotime($key->date)).'</td>
+				 <td><span class="label label-primary">'.$key->transaction.'</span></td>
+				 <td>'.$key->description.'</td>';				 
+
+				 if($key->transaction=='payment'): 
+               		$responseString.='<td>'.$key->payment_amount.'</td><td></td>';
+             	elseif ($key->transaction=='receipt'): 
+              		$responseString.='<td></td><td>'.$key->payment_amount.'</td>'; 
+           		 endif;                
+          		if ($key->transaction=='receipt'){
+          			if($key->payment_mode='cash'){
+          				$calPreBal=$calPreBal+$key->payment_amount;
+               	$responseString.= '<td>'.$calPreBal.'</td>';}
+          		}
+      			elseif ($key->transaction=='payment'){
+      				if($key->payment_mode=='cash'){
+      					$calPreBal=$calPreBal-$key->payment_amount;
+               $responseString.= '<td>'.$calPreBal.'</td>';
+           		}}      			
+               $responseString.= '<td>'.$key->user_id.'</td><td></td>';  
+
+				$responseString.='</tr>';
+				 
+				 }
+				 $json['rows']= $responseString;
+				 echo json_encode($json);
+				}
+				else{
+					$json['rows']= "No Record Found";
+				echo json_encode($json);
+			}			
+		}
+		
+	}
+	public function bank_book()
+		{
+			// $startDate=new DateTime('first day of this month');
+			$startDate=date('Y-m-01');
+			$endDate=date('Y-m-t');
+
+			$this->db->where('date <',$startDate);
+			$this->db->where('payment_mode','bank'); 
+			$this->db->where('bank_id','1');		
+			$openingBal=$this->reports->get_all();
+			$initialBal=$this->bank->view_by('1');
+
+			$openingBalVari=0;
+			if($openingBal!=false){
+
+			foreach ($openingBal as $key) {
+				 if($key->transaction=='receipt'){
+				 	$openingBalVari=$openingBalVari-$key->payment_amount;
+				 }
+				elseif($key->transaction=='payment'){
+				 	$openingBalVari=$openingBalVari+$key->payment_amount;
+				 }
+				}
+							
+			$data['openingBal']=$openingBalVari;
+			}else{
+			$data['openingBal']=$initialBal->initial_balance;
+
+			}
+
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');	
+			$this->db->where('payment_mode','bank'); 
+			$this->db->where('bank_id','1');									
+			$data['purchases']=$this->reports->get_all();
+			// print_r($data['purchases']);
+			// die();		
+			$data['title']=' ECommerce | Reports Bank Book';
+			$data['mainContent']='admin/reports/bank_book';
+			$this->load->view('admin/template/master1',$data);
+		}
+		public function bank_book_view()
+	{	
+		$json=array();
+		if ($_SERVER['REQUEST_METHOD']=='GET') 
+	 		{
+			$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+	 			
+			if (($this->input->get('inputStartDate'))&&($this->input->get('inputEndDate'))) 
+			{
+			$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+
+			$endDate=date('Y-m-d',strtotime($this->input->get('inputEndDate')));
+			
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');		
+			
+			if ($this->input->get('inputBank')) 
+			{				
+				$bank=$this->input->get('inputBank');
+				$this->db->where('bank_id',$bank);
+			}
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}		
+		  }
+		  elseif ($this->input->get('inputBank')) 
+			{				
+				$bank=$this->input->get('inputBank');
+				$this->db->where('bank_id',$bank);
+			
+			if ($this->input->get('inputTransType')) 
+			{			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+			}	
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputTransType')) 
+		   {			
+				$transType=$this->input->get('inputTransType');			
+				$this->db->where('transaction',$transType);
+				
+			if ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}
+		   }
+		   elseif ($this->input->get('inputUser')) 
+			{
+			$this->db->where('user_id', $this->input->get('inputUser'));
+			}				
+		  $this->db->where('payment_mode','bank');		 
+		  $purchases=$this->reports->get_all();
+		  
+		  $this->db->where('date <', $startDate);
+		  $this->db->where('payment_mode','bank');		  
+		  if ($this->input->get('inputBank')) {
+		  $this->db->where('bank_id',$this->input->get('inputBank'));
+		 		  }		  
+		  $openingBal=$this->reports->get_all();
+		  $initialBal=$this->bank->view_by($this->input->get('inputBank'));
+		  $openingBalVari=$initialBal->initial_balance;
+		   if ($openingBal!=false) {
+		   	
+	   		foreach ($openingBal as $key) {
+			 if(($key->transaction=='receipt')){
+			 	if ($key->payment_mode=='bank') {			 		
+			 	$openingBalVari=$openingBalVari+$key->payment_amount;
+	 			 	}
+			 }
+			elseif($key->transaction=='payment'){
+				if ($key->payment_mode=='bank') {
+			 	$openingBalVari=$openingBalVari-$key->payment_amount;
+				 }
+			 }
+			}
+				 $json['openingBalVari']= 'OPENING BALANCE: '.$openingBalVari;
+
+		   }else{
+		   	$openingBalVari=$initialBal->initial_balance;
+		   	 $json['openingBalVari']= 'OPENING BALANCE: '. $initialBal->initial_balance;
+		   }
+		   	if($purchases!=false){
+		 	$count=0;		 	
+		 	$calPreBal=$openingBalVari;
+		 	$responseString='';
+			 foreach ($purchases as $key) {
+			$count++;		
+			
+			/* ser.no  id date transaction description debit credit balance user details
+			*/
+ 	 		$responseString.= '<tr>
+				 <td>'.$count.'</td>	
+				 <td>'.$key->mini_trans_id.'</td>
+				 <td>'.date('d-m-Y', strtotime($key->date)).'</td>
+				 <td><span class="label label-primary">'.$key->transaction.'</span></td>
+				 <td>'.$key->description.'</td>
+				 <td>'.$key->bank_name.'</td>';				 
+
+				 if($key->transaction=='payment'): 
+               		$responseString.='<td>'.$key->payment_amount.'</td><td></td>';
+             	elseif ($key->transaction=='receipt'): 
+              		$responseString.='<td></td><td>'.$key->payment_amount.'</td>'; 
+           		 endif;                
+          		if ($key->transaction=='receipt'){
+          			if($key->payment_mode='bank'){
+          				$calPreBal=$calPreBal+$key->payment_amount;
+               	$responseString.= '<td>'.$calPreBal.'</td>';}
+          		}
+      			elseif ($key->transaction=='payment'){
+      				if($key->payment_mode=='bank'){
+      					$calPreBal=$calPreBal-$key->payment_amount;
+               $responseString.= '<td>'.$calPreBal.'</td>';
+           		}}      			
+               $responseString.= '<td>'.$key->user_id.'</td><td></td>';  
+
+				$responseString.='</tr>';
+				 
+				 }
+				 $json['rows']= $responseString;
+				 echo json_encode($json);
+				}
+				else{
+					$json['rows']= "No Record Found";
+				echo json_encode($json);
+			}			
+		}
+		
+	}
+	public function customer_ledger()
+		{
+			// $startDate=new DateTime('first day of this month');
+			$startDate=date('Y-m-01');
+			$endDate=date('Y-m-t');
+
+			$this->db->where('date <',$startDate);
+			$this->db->where("(transaction='payment' OR transaction='receipt')");			
+			$this->db->where('supplier_id','1');		
+			$openingBal=$this->reports->get_all();
+			$initialBal=$this->customer->view_by('1');
+
+			$openingBalVari=0;
+			if($openingBal!=false){
+
+			foreach ($openingBal as $key) {
+				 if($key->transaction=='receipt'){
+				 	$openingBalVari=$openingBalVari+$key->payment_amount;
+				 }
+				elseif($key->transaction=='payment'){
+				 	$openingBalVari=$openingBalVari-$key->payment_amount;
+				 }
+				}
+							
+			$data['openingBal']=$openingBalVari;
+			}else{
+			$data['openingBal']=$initialBal->initial_balance;
+
+			}
+
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');	
+			$this->db->where('payment_mode','bank'); 
+			$this->db->where('bank_id','1');									
+			$data['purchases']=$this->reports->get_all();
+			// print_r($data['purchases']);
+			// die();		
+			$data['title']=' ECommerce | Reports Bank Book';
+			$data['mainContent']='admin/reports/customer_ledger';
+			$this->load->view('admin/template/master1',$data);
+		}
+	public function customer_ledger_view()
+		{	
+			$json=array();
+			if ($_SERVER['REQUEST_METHOD']=='GET') 
+		 		{
+				$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+		 			
+				if (($this->input->get('inputStartDate'))&&($this->input->get('inputEndDate'))) 
+				{
+				$startDate=date('Y-m-d',strtotime($this->input->get('inputStartDate')));
+
+				$endDate=date('Y-m-d',strtotime($this->input->get('inputEndDate')));
+				
+				$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');		
+				
+				if ($this->input->get('inputCustomer')) 
+				{				
+					$customer=$this->input->get('inputCustomer');
+					$this->db->where('supplier_id',$customer);
+				}
+				if ($this->input->get('inputTransType')) 
+				{			
+					$transType=$this->input->get('inputTransType');			
+					$this->db->where('transaction',$transType);
+				}	
+				if ($this->input->get('inputUser')) 
+				{
+				$this->db->where('user_id', $this->input->get('inputUser'));
+				}		
+			  }
+			  elseif ($this->input->get('inputCustomer')) 
+				{				
+					$customer=$this->input->get('inputCustomer');
+					$this->db->where('supplier_id',$customer);
+				
+				if ($this->input->get('inputTransType')) 
+				{			
+					$transType=$this->input->get('inputTransType');			
+					$this->db->where('transaction',$transType);
+				}	
+				if ($this->input->get('inputUser')) 
+				{
+				$this->db->where('user_id', $this->input->get('inputUser'));
+				}
+			   }
+			   elseif ($this->input->get('inputTransType')) 
+			   {			
+					$transType=$this->input->get('inputTransType');			
+					$this->db->where('transaction',$transType);
+					
+				if ($this->input->get('inputUser')) 
+				{
+				$this->db->where('user_id', $this->input->get('inputUser'));
+				}
+			   }
+			   elseif ($this->input->get('inputUser')) 
+				{
+				$this->db->where('user_id', $this->input->get('inputUser'));
+				}				
+			  $this->db->where("(transaction='payment' OR transaction='receipt')");		 
+			  $purchases=$this->reports->get_all();
+
+			  $this->db->where('date <', $startDate);
+			  	  
+			  if ($this->input->get('inputCustomer')) {
+			  $this->db->where('supplier_id',$this->input->get('inputCustomer'));
+			 		  }		  
+			  $openingBal=$this->reports->get_all();
+			  $initialBal=$this->customer->view_by($this->input->get('inputCustomer'));
+			  $openingBalVari=$initialBal->initial_balance;
+			   if ($openingBal!=false) {
+			   	
+		   		foreach ($openingBal as $key) {
+				 if(($key->transaction=='receipt')){
+				 			 		
+				 	$openingBalVari=$openingBalVari-$key->payment_amount;
+		 			 
+				 }
+				elseif($key->transaction=='payment'){
+					
+				 	$openingBalVari=$openingBalVari+$key->payment_amount;
+					 
+				 }
+				}
+					 $json['openingBalVari']= 'INITIAL BALANCE: '.$openingBalVari;
+
+			   }else{
+			   	$openingBalVari=$initialBal->initial_balance;
+			   	 $json['openingBalVari']= 'INITIAL BALANCE: '. $initialBal->initial_balance;
+			   }
+			   	if($purchases!=false){
+			 	$count=0;		 	
+			 	$calPreBal=$openingBalVari;
+			 	$responseString='';
+				 foreach ($purchases as $key) {
+				$count++;		
+			
+			/* ser.no  id date transaction description debit credit balance user details
+			*/
+ 	 		$responseString.= '<tr>
+				 <td>'.$count.'</td>	
+				 <td>'.$key->mini_trans_id.'</td>
+				 <td>'.date('d-m-Y', strtotime($key->date)).'</td>
+				 <td><span class="label label-primary">'.$key->transaction.'</span></td>
+				 <td>'.$key->description.'</td>';				 
+
+				 if($key->transaction=='payment'): 
+               		$responseString.='<td>'.$key->payment_amount.'</td><td></td>';
+             	elseif ($key->transaction=='receipt'): 
+              		$responseString.='<td></td><td>'.$key->payment_amount.'</td>'; 
+           		 endif;                
+          		if ($key->transaction=='receipt'){
+          			
+          				$calPreBal=$calPreBal+$key->payment_amount;
+               	$responseString.= '<td>'.$calPreBal.'</td>';
+          		}
+      			elseif ($key->transaction=='payment'){
+      				
+      					$calPreBal=$calPreBal-$key->payment_amount;
+               $responseString.= '<td>'.$calPreBal.'</td>';
+           		}      			
+               $responseString.= '<td>'.$key->user_id.'</td><td></td>';  
+
+				$responseString.='</tr>';
+				 
+				 }
+				 $json['rows']= $responseString;
+				 echo json_encode($json);
+				}
+				else{
+					$json['rows']= "No Record Found";
+				echo json_encode($json);
+			}			
+		}
+	public function customer_ledger()
+		{
+			// $startDate=new DateTime('first day of this month');
+			$startDate=date('Y-m-01');
+			$endDate=date('Y-m-t');
+
+			$this->db->where('date <',$startDate);
+			$this->db->where("(transaction='payment' OR transaction='receipt')");			
+			$this->db->where('supplier_id','1');		
+			$openingBal=$this->reports->get_all();
+			$initialBal=$this->customer->view_by('1');
+
+			$openingBalVari=0;
+			if($openingBal!=false){
+
+			foreach ($openingBal as $key) {
+				 if($key->transaction=='receipt'){
+				 	$openingBalVari=$openingBalVari+$key->payment_amount;
+				 }
+				elseif($key->transaction=='payment'){
+				 	$openingBalVari=$openingBalVari-$key->payment_amount;
+				 }
+				}
+							
+			$data['openingBal']=$openingBalVari;
+			}else{
+			$data['openingBal']=$initialBal->initial_balance;
+
+			}
+
+			$this->db->where('date BETWEEN "'. $startDate. '" and "'. $endDate.'"');	
+			$this->db->where('payment_mode','bank'); 
+			$this->db->where('bank_id','1');									
+			$data['purchases']=$this->reports->get_all();
+			// print_r($data['purchases']);
+			// die();		
+			$data['title']=' ECommerce | Reports Bank Book';
+			$data['mainContent']='admin/reports/customer_ledger';
+			$this->load->view('admin/template/master1',$data);
+		}	
+		
+	}
+}
+
+
+/* End of file Reports.php */
+/* Location: ./application/controllers/admin/Reports.php */
+
+
+

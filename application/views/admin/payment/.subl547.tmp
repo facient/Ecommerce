@@ -1,0 +1,514 @@
+                <!-- Page Header -->
+                <div class="content bg-gray-lighter">
+                    <div class="row items-push">
+                        <div class="col-sm-7">
+                            <h1 class="page-heading">
+                                Payments <small> List</small>
+                            </h1>
+                        </div>
+                        <div class="col-sm-5 text-right hidden-xs">
+                            <ol class="breadcrumb push-10-t">
+                                <li>Payments</li>
+                                <li><a class="link-effect" href="">List</a></li>
+                            </ol>
+                            <div id="divid">
+                              
+                              </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- END Page Header -->
+
+                <!-- Page Content -->
+                <div class="content">
+                    <!-- Dynamic Table Full -->
+                    <div class="block">
+                        <div class="block-header">
+                          <a href="#addPayment" data-toggle="modal"><button id="inputAddPayment" type="button" class="btn btn-primary push-5-r push-10">
+                          <i class="fa fa-plus push-5-r"></i>Add Payments</button></a>
+
+                          <?php if ($this->session->flashdata('success')): ?>
+                           <div class="alert alert-success"> <?php echo $this->session->flashdata('success'); ?></div>
+                       <?php endif ?>
+
+                       <div class="alert alert-danger flashdelete" style="display:none"></div>
+
+                   </div>
+                    
+                   <div class="block-content">
+                    <!-- DataTables init on table by adding .js-dataTable-full class, functionality initialized in js/pages/base_tables_datatables.js -->
+
+                    <div class="table table-responsive">
+                    <table  class="table table-bordered table-striped" id="mydatatable1" >
+                        <thead>
+                            <tr>
+                                <th class="text-center"  style="width: 10%;"></th>
+                                <th  style="width: 15%;">Date</th>
+                                <th  style="width: 15%;">Supplier Name</th>
+                                <th>Description</th>                                
+                                <th>Payment Mode</th>                                
+                                <th>Bank</th>                                
+                                <th>Cheque Return</th>                                
+                                <th>Cheque Number</th>                                
+                                <th>Cheque Date</th>                                                                                                
+                                <th>Payment Amount</th>
+                                <th class="hidden-xs"  style="width: 15%;">Status</th>
+                                <th class="hidden-xs"  style="width: 15%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                             
+          
+                            <?php $count=1;
+                             if (isset($payments)): ?>
+                                <?php foreach ($payments as $payment): ?>
+                                  <input type="hidden" name="inputSupplierId" id="inputSupplierId" class="form-control" value="<?php echo $payment->supplier_id; ?>">
+                                    <tr id="rowdetail">
+                                        <td class="text-center"><?php echo $count; ?></td>
+                                        <td class="font-w600 text-center"><?php echo $payment->date; ?></td>
+                                        <td class="font-w600 text-center"><?php echo $payment->supplier_name; ?></td>
+                                        <td class="font-w600"><?php echo $payment->description; ?></td>                                        
+                                        <td class="font-w600"><label class="label label-<?php echo ($payment->payment_mode=='bank')?'primary':'success';?>"><?php echo $payment->payment_mode; ?></label></td>
+                                        <td class="font-w600"><?php echo $payment->bank_name; ?></td>
+                                        <td class="font-w600"><p class="text-danger">
+                                        <?php echo $payment->cheque_return; ?></p></td>
+                                        <td class="font-w600"><?php echo $payment->cheque_no; ?></td>
+                                        <td class="font-w600"><?php echo $payment->cheque_date; ?></td>
+                                        <td class="font-w600"><?php echo $payment->payment_amount; ?></td>
+                                        <td class="text-center">
+                                            <?php if ($payment->status=='active'):?>
+                                            <a class="singleStatus" href="/admin/payment/status/<?php echo $payment->id;  ?>"><span class="label label-primary">Active</span></a>
+                                            <?php else: ?>
+                                            <a class="singleStatus" href="/admin/payment/status/<?php echo $payment->id; ?>"><span class="label label-danger">Deacitve</span></a>
+                                            <?php endif ?>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group">                                              
+                                               <a href="#addPayment" class="editpayment" data-toggle="modal"> 
+                                               <button name="<?php echo $payment->id; ?>" 
+                                                class="btn btn-xs btn-default" type="button" data-toggle="tooltip" 
+                                                title="Edit Client"><i class="fa fa-pencil"></i></button></a>                                               
+                                               <a href="/admin/payment/delete/<?php echo $payment->id; ?>" 
+                                               class="singleDelete"><button class="btn btn-xs btn-default"  
+                                               type="button" data-toggle="tooltip">
+                                               <i class="fa fa-times"></i></button></a>
+                                           </div>
+                                       </td>
+                                   </tr>
+                                   <?php $count++; ?>
+                               <?php endforeach; ?>
+                           <?php endif; ?>
+
+                       </tbody>
+                   </table>
+                  </div>
+               
+               </div>
+           </div>
+           <!-- END Dynamic Table Full -->
+
+
+       </div>
+       <!-- END Page Content -->
+
+ <!--Start Add Payment Modal -->
+
+       <?php $random= rand(1,99999); ?>
+        <form action="/admin/payment/add" method="post" class="js-validation-bootstrap form-horizontal" >       
+         <input type="hidden" name="inputHiddenId" id="inputHiddenId" class="form-control" value="<?php echo $random; ?>">
+         
+         <div class="modal fade" id="addPayment" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+          <div class="modal-dialog modal-lg" role="dialog" >
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Add Payment</h4>
+                <h4 class="modal-title" id="myEditModalLabel" style="display:none;">Edit Payment</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                 <div class="col-lg-6">
+                     <div class="form-group">
+                        <label class="col-md-4 control-label" for="example-datepicker1">Date
+                        <span class="text-danger">*</span></label>
+                        <div class="col-md-7">
+                            <input class="js-datepicker form-control" name="inputDate" type="text" 
+                            id="inputDate" data-date-format="dd/mm/yy" placeholder="dd/mm/yy" required>
+                        </div>
+                    </div>  
+                    <div class="form-group">
+                    <label class="col-md-4 control-label" for="example-textarea-input">Description
+                    <span class="text-danger">*</span></label>
+                    <div class="col-md-7">
+                        <textarea class="form-control" id="inputDescription" name="inputDescription" rows="3" placeholder="Description" required></textarea>
+                    </div>
+                </div>           
+                </div>
+               <div class="col-lg-6"> 
+                    <div class="form-group">
+                        <?php $suppliers=$this->supplier->view_all_active(); ?>                       
+                        <label class="col-md-4 control-label" for="val-skill">Supplier<span class="text-danger">*</span></label>
+                        <div class="col-md-7">
+                            <select class="form-control" id="inputSupplier" name="inputSupplier" required>
+                               <option value="">Select Supplier</option>
+                              <?php foreach ($suppliers as $supplier): ?>
+                               <option value="<?php echo $supplier->id; ?>"><?php echo $supplier->name; ?></option>
+                                <?php endforeach ?>
+                           </select>
+                       </div>
+                   </div>                
+               </div>
+                <div class="col-lg-6"> 
+                    <div class="form-group">                        
+                        <label class="col-md-4 control-label" for="val-skill">Payment Mode<span class="text-danger">*</span></label>
+                        <div class="col-md-7">
+                            <select class="form-control" id="inputPaymentMode" name="inputPaymentMode" required onchange="payment_mode()">
+                               <option value="">Select Payment Mode</option>                              
+                               <option value="cash">Cash</option>
+                               <option value="bank">Bank</option>
+                                
+                           </select>
+                       </div>
+                   </div>                
+               </div>
+               </div>
+                <hr>
+      <div class="row">
+        <!--Start Cash Tab  -->
+        <div id="divCash" style="display:none;">    
+        <div class="panel panel-success">
+            <!-- Default panel contents -->
+            <div class="panel-heading"><strong>Add Cash Transaction</strong></div>
+            <div class="panel-body">
+            <div class="block-content">
+               <div class="row">                
+                <div class="col-lg-6">             
+                 <div class="form-group">
+                  <label class="col-md-4 control-label" for="val-username">Amount</label>
+                    <div class="col-md-7">
+                      <input class="form-control valid" type="number" id="inputCash" 
+                      name="inputCash" placeholder="Enter Cash Amount" 
+                      aria-required="true" aria-invalid="false" aria-describedby="val-username-error">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">                                     
+                     <div class="col-lg-5">
+                      <label class="css-input css-checkbox css-checkbox-primary">
+                          <input name="inputStatus" id="inputStatus" type="checkbox" value="active" >
+                          <span></span> Post
+                      </label>
+                    </div>
+                    <div class="col-lg-1">                      
+                    </div>
+                    </div>
+                </div>
+               </div>
+            </div>                   
+        </div>
+      </div>
+      </div>
+      <!--End Cash Tab  -->
+
+      <!--Start Bank Tab  -->
+
+        <div id="divBank" style="display:none;">    
+        <div class="panel panel-success">
+            <!-- Default panel contents -->
+            <div class="panel-heading"><strong>Add Bank Transaction</strong></div>
+            <div class="panel-body">
+            <div class="block-content">
+                <div class="row">
+                  <div class=" col-lg-6">
+                   <div class="form-group">
+                      <label class="col-md-4 control-label" for="val-skill">Bank 
+                      <span class="text-danger">*</span></label>
+                      <div class="col-md-7">
+                            <?php $banks=$this->bank->view_all_active(); ?>
+                          <select class="form-control valid" id="inputBank" name="inputBank" aria-required="true" aria-invalid="false" aria-describedby="val-skill-error">
+                              <option value="">Please Select Bank</option>                              
+                              <?php foreach ($banks as $bank): ?>
+                              <option value="<?php echo $bank->id; ?>"><?php echo $bank->name; ?></option>
+                                
+                              <?php endforeach ?>
+                              
+                          </select>
+                      </div>
+                  </div>
+                     <div class="form-group">
+                        <label class="col-md-4 control-label" for="example-datepicker1">Date
+                        <span class="text-danger">*</span></label>
+                        <div class="col-md-7">
+                            <input class="js-datepicker form-control" name="inputChequeDate" type="text" 
+                            id="inputChequeDate" data-date-format="dd/mm/yy" placeholder="Enter Cheque Date" required>
+                        </div>
+                    </div> 
+
+                    <div class="form-group">
+                    <label class="col-md-4 control-label" for="val-username">Amount<span class="text-danger">*</span></label>
+                    <div class="col-md-7">
+                      <input class="form-control valid" type="number" id="inputBankCash" 
+                      name="inputBankCash" placeholder="Enter Cash Amount" 
+                      aria-required="true" aria-invalid="false" aria-describedby="val-username-error">
+                    </div>
+                  </div> 
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                    <label class="col-md-4 control-label" for="val-username">Cheque Number<span class="text-danger">*</span></label>
+                    <div class="col-md-7">
+                      <input class="form-control valid" type="number" id="inputChequeNumber" 
+                      name="inputChequeNumber" placeholder="Enter Cheque Number" 
+                      aria-required="true" aria-invalid="false" aria-describedby="val-username-error">
+                    </div>
+                  </div>
+                    <div class="form-group">
+                    <div class="col-lg-5">
+                      <label class="css-input css-checkbox css-checkbox-primary">
+                          <input name="inputChequeReturn" id="inputChequeReturn" type="checkbox"
+                          value="return"><span></span> Cheque Return
+                      </label>
+                    </div>
+                   <!--  <div class="col-lg-1">                      
+                                      </div> -->                   
+                  </div>
+                    <div class="form-group">                                     
+                     <div class="col-lg-5">
+                      <label class="css-input css-checkbox css-checkbox-primary">
+                          <input name="inputStatus" id="inputBankStatus" type="checkbox" value="active" >
+                          <span></span> Post
+                      </label>
+                    </div>
+                    <div class="col-lg-1">                      
+                    </div>
+                    </div>
+
+                  </div>
+
+                 
+                </div>
+            </div>                   
+        </div>
+      </div>
+      </div>
+      <!--End Bank Tab  -->
+
+    </div> 
+    </div>
+        <div class="modal-footer">
+            <button id="inputAddPaymentButton" class="btn btn-sm btn-primary" type="submit">
+            Add Payment</button>
+            <button id="inputEditPaymentButton" class="btn btn-sm btn-primary" type="submit" style="display:none;">
+            Update Payment</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <?php echo form_close(); ?>
+  <!-- End Add Payment Modal -->
+
+
+<!-- Start Edit Payment Modal -->
+  <!--   <form action="" method="post" class="js-validation-bootstrap form-horizontal" >
+       <input type="hidden" name="inputEditHiddenId" id="inputEditHiddenId" class="form-control">
+       <div class="modal fade" id="editPayment" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-lg" role="dialog" >
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title" id="myEditModalLabel">Edit Payment</h4>
+          </div>
+          <div class="modal-body">
+              <div class="row">
+               <div class="col-lg-6">
+                   <div class="form-group">
+                      <label class="col-md-4 control-label" for="example-datepicker1">Date
+                      <span class="text-danger">*</span></label>
+                      <div class="col-md-7">
+                          <input class="js-datepicker form-control" name="inputEditDate" type="text" 
+                          id="inputEditDate" data-date-format="dd/mm/yy" placeholder="dd/mm/yy" required>
+                      </div>
+                  </div>  
+                  <div class="form-group">
+                  <label class="col-md-4 control-label" for="example-textarea-input">Description
+                  <span class="text-danger">*</span></label>
+                  <div class="col-md-7">
+                      <textarea class="form-control" id="inputEditDescription" name="inputEditDescription" rows="3" placeholder="Description" required></textarea>
+                  </div>
+              </div>           
+              </div>
+             <div class="col-lg-6"> 
+                  <div class="form-group">
+                      <?php//$suppliers=$this->supplier->view_all_active(); ?>                       
+                      <label class="col-md-4 control-label" for="val-skill">Supplier<span class="text-danger">*</span></label>
+                      <div class="col-md-7">
+                          <select class="form-control" id="inputEditSupplier" name="inputEditSupplier" required>
+                             <option value="">Select Supplier</option>
+                            <?php //foreach ($suppliers as $supplier): ?>
+                             <option value="<?php// echo $supplier->id; ?>"><?php //echo $supplier->name; ?></option>
+                              <?php //endforeach ?>
+                         </select>
+                     </div>
+                 </div>                
+             </div>
+              <div class="col-lg-6"> 
+                  <div class="form-group">                        
+                      <label class="col-md-4 control-label" for="val-skill">Payment Mode<span class="text-danger">*</span></label>
+                      <div class="col-md-7">
+                          <select class="form-control" id="inputEditPaymentMode" name="inputEditPaymentMode" required onchange="payment_edit_mode ()">
+                             <option value="">Select Payment Mode</option>                              
+                             <option value="cash">Cash</option>
+                             <option value="bank">Bank</option>
+                              
+                         </select>
+                     </div>
+                 </div>                
+             </div>
+             </div>
+              <hr>
+    <div class="row">
+      Start Cash Tab
+      <div id="divEditCash" style="display:none;">    
+      <div class="panel panel-success">
+          Default panel contents
+          <div class="panel-heading"><strong>Add Cash Transaction</strong></div>
+          <div class="panel-body">
+          <div class="block-content">
+             <div class="row">                
+              <div class="col-lg-6">             
+               <div class="form-group">
+                <label class="col-md-4 control-label" for="val-username">Amount</label>
+                  <div class="col-md-7">
+                    <input class="form-control valid" type="number" id="inputEditCash" 
+                    name="inputEditCash" placeholder="Enter Cash Amount" 
+                    aria-required="true" aria-invalid="false" aria-describedby="val-username-error">
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="form-group">                                     
+                   <div class="col-lg-5">
+                    <label class="css-input css-checkbox css-checkbox-primary">
+                        <input name="inputEditCashStatus" id="inputEditCashStatus" type="checkbox" value="active" >
+                        <span></span> Post
+                    </label>
+                  </div>
+                  <div class="col-lg-1">                      
+                  </div>
+                  </div>
+              </div>
+             </div>
+          </div>                   
+      </div>
+    </div>
+    </div>
+    End Cash Tab
+  
+    Start Bank Tab
+  
+      <div id="divEditBank" style="display:none;">    
+      <div class="panel panel-success">
+          Default panel contents
+          <div class="panel-heading"><strong>Add Bank Transaction</strong></div>
+          <div class="panel-body">
+          <div class="block-content">
+              <div class="row">
+                <div class=" col-lg-6">
+                 <div class="form-group">
+                    <label class="col-md-4 control-label" for="val-skill">Bank 
+                    <span class="text-danger">*</span></label>
+                    <div class="col-md-7">
+                          <?php //$banks=$this->bank->view_all_active(); ?>
+                        <select class="form-control valid" id="inputEditBank" name="inputEditBank" aria-required="true" aria-invalid="false" aria-describedby="val-skill-error">
+                            <option value="">Please Select Bank</option>                              
+                            <?php// foreach ($banks as $bank): ?>
+                            <option value="<?php //echo $bank->id; ?>"><?php// echo $bank->name; ?></option>
+                              
+                            <?php //endforeach ?>
+                            
+                        </select>
+                    </div>
+                </div>
+                   <div class="form-group">
+                      <label class="col-md-4 control-label" for="example-datepicker1">Date
+                      <span class="text-danger">*</span></label>
+                      <div class="col-md-7">
+                          <input class="js-datepicker form-control" name="inputEditChequeDate" type="text" 
+                          id="inputEditChequeDate" data-date-format="dd/mm/yy" placeholder="Enter Cheque Date" required>
+                      </div>
+                  </div> 
+  
+                  <div class="form-group">
+                  <label class="col-md-4 control-label" for="val-username">Amount<span class="text-danger">*</span></label>
+                  <div class="col-md-7">
+                    <input class="form-control valid" type="number" id="inputEditBankCash" 
+                    name="inputEditBankCash" placeholder="Enter Cash Amount" 
+                    aria-required="true" aria-invalid="false" aria-describedby="val-username-error">
+                  </div>
+                </div> 
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">
+                  <label class="col-md-4 control-label" for="val-username">Cheque Number<span class="text-danger">*</span></label>
+                  <div class="col-md-7">
+                    <input class="form-control valid" type="number" id="inputEditChequeNumber" 
+                    name="inputEditChequeNumber" placeholder="Enter Cheque Number" 
+                    aria-required="true" aria-invalid="false" aria-describedby="val-username-error">
+                  </div>
+                </div>
+                  <div class="form-group">
+                  <div class="col-lg-5">
+                    <label class="css-input css-checkbox css-checkbox-primary">
+                        <input name="inputEditChequeReturn" id="inputEditChequeReturn" type="checkbox"
+                        value="return"><span></span> Cheque Return
+                    </label>
+                  </div>
+                 <div class="col-lg-1">                      
+                                    </div>                   
+                </div>
+                  <div class="form-group">                                     
+                   <div class="col-lg-5">
+                    <label class="css-input css-checkbox css-checkbox-primary">
+                        <input name="inputEditStatus" id="inputEditStatus" type="checkbox" 
+                        value="active" >
+                        <span></span> Post
+                    </label>
+                  </div>
+                  <div class="col-lg-1">                      
+                  </div>
+                  </div>
+  
+                </div>
+  
+               
+              </div>
+          </div>                   
+      </div>
+    </div>
+    </div>
+    End Bank Tab
+  
+  </div> 
+  </div>
+      <div class="modal-footer">
+          <button id="inputEditPaymentButton" class="btn btn-sm btn-primary" type="button">
+          Update Payment</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+  </div>
+    </div>
+    </div> -->
+    
+        
+
+    
+<!-- End Edit Payment Modal -->
+
+
+<!--Start view Details -->
+  
+<!--End view Details -->
