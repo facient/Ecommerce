@@ -21,7 +21,8 @@ class User extends MY_Controller {
 	public function login($id)
 	{
 		
-		echo "This is the login Page";
+		$this->data['message'] = 'here will be the login form';
+        $this->render('user/login_view');
 
 			
 	}
